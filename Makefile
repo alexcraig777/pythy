@@ -2,8 +2,7 @@ all_sub_dirs = $(wildcard */.)
 sub_dirs = $(filter-out __pycache__/., $(all_sub_dirs))
 
 test:
-	make -C test stuff.so
-	cd test; pytest
+	make -C test
 
 clean:
 	echo $(sub_dirs)
