@@ -106,57 +106,9 @@ import os
 import types
 
 from .regex import MiniRegex
+from . import split
+from . import variable
 from . import wrappers as built_in_wrapper_module
-
-
-def split_at_last_space(string):
-    """ Split the string into 2 pieces around the last space.
-
-    This is handy for splitting a string that was used to specify a
-    C parameter into type and name. """
-
-    space_idx = string.rfind(" ")
-    if space_idx == -1:
-        raise ValueError("'{}' contains no space".format(string))
-    else:
-        return string[:space_idx], string[space_idx + 1:]
-
-
-class Type:
-    """ A class representing ctypes types. """
-
-    type_str_dict = {ctypes.c_char: "char",
-                     ctypes.c_short: "short",
-                     ctypes.c_int: "int",
-                     ctypes.c_long: "long",
-                     ctypes.c_bool: "bool",
-                     ctypes.c_size_t: "size_t",
-                     ctypes.c_char_p: "char*",
-                     ctypes.c_void_p: "void*",
-                     None: "void"}
-
-    def __init__(self, c_str):
-        self.c_str = c_str
-        for ct, t_str in self.type_str_dict.items():
-            if t_str == c_str:
-                self.c_type = ct
-                break
-        else:
-            raise ValueError("type_str '{}' not understood".format(c_str))
-
-    def __str__(self):
-        return self.c_str
-
-
-class Parameter:
-    """ A class representing parameters to C functions. """
-
-    def __init__(self, param_str):
-        type_str, self.name = split_at_last_space(param_str)
-        self.type = Type(type_str)
-
-    def __str__(self):
-        return "{} {}".format(self.type, self.name)
 
 
 class InterfaceFunction:
@@ -173,16 +125,16 @@ class InterfaceFunction:
         first_half, param_half = prototype[: -2].split("(")
 
         # Find the function's return type and C name.
-        rtn_type_str, c_name = split_at_last_space(first_half)
+        rtn_type_str, c_name = split.split_at_last_space(first_half)
         self.c_name = c_name
-        self.rtn_type = Type(rtn_type_str)
+        self.rtn_type = variable.Type(rtn_type_str)
 
         # Parse out the parameters.
         # We need different C and Python parameter lists, because Python's
         # parameters will change (certainly for class methods).
         param_strings = [s.strip() for s in param_half.split(",")]
-        self.c_params = [Parameter(param_str) for param_str in param_strings]
-        self.py_params = [Parameter(str(param)) for param in self.c_params]
+        self.c_params = [variable.Parameter(param_str) for param_str in param_strings]
+        self.py_params = [variable.Parameter(str(param)) for param in self.c_params]
 
         assert self.c_name.startswith(self.interface_prefix)
         self.py_name = self.c_name.removeprefix(self.interface_prefix)
@@ -272,10 +224,10 @@ class InterfaceFunction:
 
         if self.py_name == "__init__":
             # This will take care of inserting the first "self" parameter.
-            self.register_wrapper(wrapper_init_method)
+            self.register_wrapper(built_in_wrapper_module.init_method)
         else:
             # This will take care of changing the first parameter name.
-            self.register_wrapper(wrapper_generic_method)
+            self.register_wrapper(built_in_wraper_module.generic_method)
 
 
 class InterfaceClass:

@@ -1,6 +1,7 @@
-##################################
-### InterfaceFunction wrappers ###
-##################################
+""" Built-in wrappers for interface functions """
+
+from . import variable
+
 
 def init_method(interface_function):
     """ The wrapper for InterfaceFunctions that represent
@@ -10,7 +11,7 @@ def init_method(interface_function):
     # don't get into infinite recursion when the wrapper is called.
     orig_py_func = interface_function.py_func
 
-    interface_function.py_params.insert(0, Parameter("void* self"))
+    interface_function.py_params.insert(0, variable.Parameter("void* self"))
 
     def wrap(self, *args):
         self.ptr = orig_py_func(*args)
@@ -58,6 +59,3 @@ def decode_string_rtn(interface_function):
         return rtn
 
     interface_function.py_func = wrap
-
-
-
