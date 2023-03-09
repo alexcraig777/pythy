@@ -227,7 +227,7 @@ class InterfaceFunction:
             self.register_wrapper(built_in_wrapper_module.init_method)
         else:
             # This will take care of changing the first parameter name.
-            self.register_wrapper(built_in_wraper_module.generic_method)
+            self.register_wrapper(built_in_wrapper_module.generic_method)
 
 
 class InterfaceClass:
