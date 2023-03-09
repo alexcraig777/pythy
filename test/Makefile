@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -g -Wall -Wextra
 
 # These are the library names that are required for testing.
-libs = funcs
+libs = funcs classes
 
 libs_so = $(foreach lib, $(libs), $(lib).so)
 libs_o  = $(foreach lib, $(libs), $(lib).o)
