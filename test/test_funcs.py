@@ -3,9 +3,6 @@ import types
 from .. import interface
 
 
-# Initialize the empty module that we'll fill out.
-
-
 def test_basic_functionality():
     """ Tests basic functionality """
     func_lib = interface.create_interface("funcs_basic.h", "./funcs.so")
