@@ -17,8 +17,8 @@ def test_bind_to_prior_module():
     and bind to it internally """
     func_lib = types.ModuleType("func_lib")
     new_func_lib = interface.create_interface("funcs_basic.h",
-                                               "./funcs.so",
-                                               module = func_lib)
+                                              "./funcs.so",
+                                              module = func_lib)
     assert new_func_lib is func_lib
 
     assert func_lib.add(1, 2) == 3
@@ -27,7 +27,7 @@ def test_bind_to_prior_module():
     assert new_str == b"hello!"
 
 def test_docs():
-    """ Tests the function doc string generation """
+    """ Tests the function doc-string generation """
     func_lib = interface.create_interface("funcs_basic.h", "./funcs.so")
 
     # The name should be the basename of the header file up until
@@ -41,7 +41,7 @@ def test_docs():
 def test_alias():
     """ Tests function aliasing """
     func_lib = interface.create_interface("funcs_alias.h",
-                                       "./funcs.so")
+                                          "./funcs.so")
     assert func_lib.cat(b"hel", b"lo!") == b"hello!"
 
 def test_built_in_wrappers():
@@ -51,7 +51,7 @@ def test_built_in_wrappers():
     encoded, and all string returns decoded. """
 
     func_lib = interface.create_interface("funcs_built_in_wrappers.h",
-                                       "./funcs.so")
+                                          "./funcs.so")
     assert func_lib.get_len("hello") == 5
     assert func_lib.concatenate("hel", "lo!") == "hello!"
 
@@ -64,8 +64,8 @@ def test_custom_wrappers():
 
     from . import custom_wrappers
     func_lib = interface.create_interface("funcs_custom_wrappers.h",
-                                       "./funcs.so",
-                                       wrapper_modules = [custom_wrappers])
+                                          "./funcs.so",
+                                          wrapper_modules = [custom_wrappers])
     assert func_lib.add(3, 5) == 10
     assert func_lib.get_len(b"hello!") == 12
 
@@ -78,8 +78,8 @@ def test_func_regex():
     `add`. """
     from . import custom_wrappers
     func_lib = interface.create_interface("funcs_simple_regex.h",
-                                       "./funcs.so",
-                                       wrapper_modules = [custom_wrappers])
+                                          "./funcs.so",
+                                          wrapper_modules = [custom_wrappers])
 
     assert func_lib.add(17, 42) == 61
     assert func_lib.get_len(b"hello!") == 12
