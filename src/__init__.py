@@ -184,7 +184,6 @@ class InterfaceFunction:
         Wrappers are applied in the order they were registered. """
 
         for wrapper in reversed(self.wrappers):
-            #print("Applying wrapper {} to {}.".format(wrapper, self))
             wrapper(self)
 
     def bind(self, module):
@@ -294,8 +293,6 @@ class Interface:
             self.wrapper_modules = wrapper_modules
             self.wrapper_modules.append(built_in_wrapper_module)
 
-        print(self.wrapper_modules)
-
         self.current_doc = ""
 
     def parse_header_file(self, header_file):
@@ -325,6 +322,16 @@ class Interface:
 
             func.apply_wrappers()
 
+        self.create_destructor(lib)
+
+    def create_destructor(self, lib):
+        """ Create the destructor function for the module """
+        if hasattr(lib, "destructor"):
+            destructor = getattr(lib, "destructor")
+            destructor.restype = None
+            destructor.argtypes = []
+            self.destructor = destructor
+
     def bind_to_module(self, module):
         """ Create the necessary attributes of `module` and set up its pydoc. """
         for cls in self.classes.values():
@@ -336,6 +343,9 @@ class Interface:
             cls.set_up_pydoc()
         for func in self.functions:
             func.set_up_pydoc()
+
+        if hasattr(self, "destructor"):
+            module.close = self.destructor
 
     def parse_logical_line(self, f):
         """ Parse a logical line from the header file.
@@ -421,7 +431,6 @@ class Interface:
 
         method_name = "_handle_" + directive
         handle_method = getattr(self, method_name)
-        #print("Calling self.{} with arg '{}'".format(method_name, arg_string))
         handle_method(arg_string)
 
     def _handle_define(self, arg_string):
@@ -449,7 +458,6 @@ class Interface:
         wrapper_name, *patterns = arg_string.split(" ")
 
         # Find the wrapper function referenced in one of the wrapper modules.
-        print(self.wrapper_modules)
         for wrapper_mod in self.wrapper_modules:
             if hasattr(wrapper_mod, wrapper_name):
                 wrapper_func = getattr(wrapper_mod, wrapper_name)

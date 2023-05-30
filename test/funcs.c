@@ -2,6 +2,9 @@
 #include <string.h>
 
 
+char* str_rtn = NULL;
+
+
 int interface_add(int x, int y)
 {
     return x + y;
@@ -16,13 +19,14 @@ int interface_get_len(char* string)
 
 char* interface_concatenate(char* s1, char* s2)
 {
-    char* rtn = malloc(strlen(s1) + strlen(s2) + 1);
+    char* rtn = realloc(str_rtn, strlen(s1) + strlen(s2) + 1);
     strcpy(rtn, s1);
     strcat(rtn, s2);
     return rtn;
 }
 
-void interface_free_ptr(char* ptr)
+__attribute__((destructor))
+void destructor(void)
 {
-    free(ptr);
+    free(str_rtn);
 }

@@ -6,6 +6,3 @@ int interface_get_len(char* string);
 
 // Concatenates 2 strings
 char* interface_concatenate(char* s1, char* s2);
-
-// Frees a pointer.
-void interface_free_ptr(char* ptr);

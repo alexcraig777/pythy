@@ -6,6 +6,10 @@
 
 #define DESCRIPTION_LENGTH 128
 
+
+char* str_rtn = NULL;
+
+
 struct rectangle* interface_init_rectangle(int length, int width)
 {
     struct rectangle* r = malloc(sizeof(*r));
@@ -21,10 +25,12 @@ int interface_get_area(struct rectangle* r)
 
 char* interface_get_rect_description(struct rectangle* r)
 {
-    char* rtn = malloc(DESCRIPTION_LENGTH);
-    snprintf(rtn, DESCRIPTION_LENGTH,
+    if (str_rtn == NULL) {
+        str_rtn = malloc(DESCRIPTION_LENGTH);
+    }
+    snprintf(str_rtn, DESCRIPTION_LENGTH,
              "This is a %dx%d rectangle!", r->length, r->width);
-    return rtn;
+    return str_rtn;
 }
 
 void interface_clean_up_rectangle(struct rectangle* r)
@@ -49,14 +55,22 @@ int interface_get_volume(struct box* b)
 
 char* interface_get_box_description(struct box* b)
 {
-    char* rtn = malloc(DESCRIPTION_LENGTH);
-    snprintf(rtn, DESCRIPTION_LENGTH,
+    if (str_rtn == NULL) {
+        str_rtn = malloc(DESCRIPTION_LENGTH);
+    }
+    snprintf(str_rtn, DESCRIPTION_LENGTH,
              "This is a %dx%dx%d box!",
              b->length, b->width, b->height);
-    return rtn;
+    return str_rtn;
 }
 
 void interface_clean_up_box(struct box* b)
 {
     free(b);
+}
+
+
+__attribute__((destructor)) void destructor(void)
+{
+    free(str_rtn);
 }
