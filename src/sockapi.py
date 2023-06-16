@@ -1,3 +1,7 @@
+""" Interface for calling functions in a shared object over a socket """
+
+
+import ctypes
 import multiprocessing
 import os
 import socket
@@ -41,6 +45,13 @@ class Socket:
 
 
 class Session:
+    fmt_map = {ctypes.c_char: "c",
+        ctypes.c_short: "h",
+        ctypes.c_int: "i",
+        ctypes.c_long: "l",
+        ctypes.c_size_t: "N",
+        ctypes.c_void_p: "p"}
+
     def __init__(self, lib, host = "localhost", port = 55555,
                  debug = True):
         self.lib = lib
@@ -51,13 +62,13 @@ class Session:
 
     def start_server(self):
         """ Actually kick off the C-side of the API in a new process """
-        # Detect if either `./sockapi` or `self.lib` don't exist.
-        with open("sockapi/sockapi") as f:
+        # Detect if either `sockapi` or `self.lib` don't exist.
+        with open("sockapi-server/sockapi") as f:
             pass
         with open(self.lib) as f:
             pass
 
-        cmd = f"sockapi/sockapi {self.lib} {self.host} {self.port}"
+        cmd = f"sockapi-server/sockapi {self.lib} {self.host} {self.port}"
 
         if self.debug:
             vg = "valgrind --leak-check=full"
@@ -86,10 +97,15 @@ class Session:
         self.server_process.join()
         self.sock.close()
 
-    def call(self, func_name, rtn_type, *args):
+    def call(self, func_name, rtn_type, args, arg_types):
         """ Call `func_name` over the socket
 
-        `rtn_type` can be `int` or `str` """
+        All types should be ctypes types. The valid integer types are
+        given in the class attribute `fmt_map`; all such arguments are
+        passed as 8-byte, big-endian byte strings. The only other valid
+        type is `ctypes.c_chap_p`; such arguments are passed as length-
+        prefixed byte arrays. """
+
         # First, send the "call" directive.
         self.sock.send_all(b"call")
         # Next, send the name, preceeded by its length.
@@ -99,45 +115,87 @@ class Session:
         self.sock.send_all(struct.pack("!I", len(args)))
 
         # Next, send each argument, preceeded by a type flag.
-        for arg in args:
-            # We don't accept strings: only bytes!
-            if not isinstance(arg, bytes) and not isinstance(arg, int):
-                print(f"Argument '{arg}' has incorrect type!")
-                raise TypeError("Arguments must be ints or bytes!")
-            if isinstance(arg, bytes):
+        for arg, ctype in zip(args, arg_types):
+            if ctype == ctypes.c_char_p:
                 self.sock.send_msg(arg)
             else:
-                if arg < 0:
-                    arg += 1 << 64
-                self.sock.send_all(struct.pack("!iQ", -1, arg))
+                self.sock.send_all(struct.pack("!i", -1))
+                self.sock.send_all(self._encode_arg(arg, ctype))
 
         # Next, send `0` for a string return or `1` for an int return.
-        if rtn_type == str:
+        if rtn_type == ctypes.c_char_p:
             rtn_flag = 0
         else:
             rtn_flag = 1
         self.sock.send_all(struct.pack("!I", rtn_flag))
 
         # And now we can receive the return value.
-        if rtn_type == str:
+        if rtn_type == ctypes.c_char_p:
             rtn = self.sock.recv_msg()
         else:
-            rtn = struct.unpack("!Q", self.sock.recv_all(8))[0]
+            rtn = self.sock.recv_all(8)
+            rtn = self._decode_rtn(rtn, rtn_type)
 
         return rtn
+
+    def make_function(self, name, arg_types, rtn_type):
+        """ Create and return a function that automatically converts
+        its arguments, calls into the shared object, and converts the
+        output """
+        def func(*args):
+            rtn = self.call(name, rtn_type, args, arg_types)
+            return rtn
+        return func
+
+    @classmethod
+    def _encode_arg(cls, arg, ctype):
+        """ Encode `arg` as a `ctype` integer
+
+        This verifies that `arg` fits in the byte-size indicated by `ctype`,
+        but it then returns an 8-byte big-endian byte string that can be
+        passed over a socket.
+        This should only be used for integer types. """
+
+        b = struct.pack("!" + cls.fmt_map[ctype], arg)
+        b = b"\x00" * (8 - len(b)) + b
+        return b
+
+    @classmethod
+    def _decode_rtn(cls, rtn, ctype):
+        """ Decode `rtn` as a `ctype` integer
+
+        `rtn` will always be an 8-byte, big-endian byte string.
+        This verifies that the unused bytes of `rtn` are 0. """
+
+        fmt = "!" + cls.fmt_map[ctype]
+
+        n = struct.calcsize(fmt)
+        z, b = rtn[:-n], rtn[-n:]
+        if any(z):
+            print(rtn)
+            raise ValueError("`rtn` (see above) is not a valid", ctype)
+
+        return struct.unpack(fmt, b)[0]
 
 
 if __name__ == "__main__":
     s = Session("../test/funcs.so", "localhost", debug=True)
 
-    x = s.call("interface_add", int, 4, 5)
-    print("Received x =", x)
+    add = s.make_function("interface_add",
+                          [ctypes.c_int, ctypes.c_int],
+                          ctypes.c_int)
 
-    y = s.call("interface_add", int, 9, -16)
-    print("Received y =", y)
+    x = add(4, 5)
+    print("Received 4 + 5 =", x)
 
-    a = s.call("interface_concatenate", str,
-               b"madison ", b"craig!")
-    print("Received a =", a)
+    y = add(9, -16)
+    print("Received 9 + -16 =", y)
+
+    cat = s.make_function("interface_concatenate",
+                          [ctypes.c_char_p, ctypes.c_char_p],
+                          ctypes.c_char_p)
+
+    mc = cat(b"madison", b" craig")
+    print("Received b'madison' + b' craig' = ", mc.decode())
 
     s.stop_server()
