@@ -1,5 +1,5 @@
 """
-Create a Python module to interface with a C library.
+Create a Python module to interface with a compiled library
 
 Stages of processing
 --------------------
@@ -10,7 +10,8 @@ Stages of processing
 
 2. Create the actual internal Python classes and functions dynamically.
    - The classes are created using Python's `type` function.
-   - The functions are loaded from the shared library using ctypes.
+   - The functions are loaded from the shared library using `backend.py`,
+     which uses either `ctypes` or `sockapi.py`.
    - This stage also applies all necessary wrappers to the new Python
      functions.
 
@@ -100,19 +101,19 @@ It automatically registers wrapper_init_method and wrapper_generic_method
 Other wrappers are added or modified as indicated by the header file.
 """
 
-import ctypes
 import keyword
 import os
 import types
 
 from .regex import MiniRegex
+from . import backend
 from . import split
 from . import variable
 from . import wrappers as built_in_wrapper_module
 
 
 class InterfaceFunction:
-    """ A class representing functions in a Python-C interface. """
+    """ A class representing functions in a Python-C interface """
 
     interface_prefix = "interface_"
 
@@ -165,11 +166,14 @@ class InterfaceFunction:
         return rtn
 
     def load_py_func(self, lib):
-        """ Load the actual function from the library using ctypes. """
+        """ Load the actual function from the library
 
-        self.py_func = getattr(lib, self.c_name)
-        self.py_func.restype = self.rtn_type.c_type
-        self.py_func.argtypes = [param.type.c_type for param in self.c_params]
+        This uses the backend (ctypes or sockapi) selected by
+        `backend.default_mode`. """
+        arg_types = [param.type.c_type for param in self.c_params]
+        self.py_func = lib.get_function(self.c_name,
+                                        arg_types,
+                                        self.rtn_type.c_type)
 
     def register_wrapper(self, wrapper):
         """ Register a wrapper to be applied later.
@@ -272,6 +276,16 @@ class InterfaceClass:
 
 
 class Interface:
+    """ A representation of a Python interface to a compiled library
+
+    The main public methods are:
+    - parse_header_file
+    - create_internals
+    - bind_to_module
+
+    Once the interface has been bound to a Python module, it's no
+    longer needed. """
+
     comment_marker = "//"
     directive_marker = "$"
 
@@ -310,7 +324,8 @@ class Interface:
         for cls in self.classes.values():
             cls.create_py_class()
 
-        lib = ctypes.cdll.LoadLibrary(library_file)
+        lib = backend.Backend(library_file)
+        lib.open_library()
         for func in self.functions:
             # Load the function from the library.
             func.load_py_func(lib)
@@ -322,15 +337,8 @@ class Interface:
 
             func.apply_wrappers()
 
-        self.create_destructor(lib)
-
-    def create_destructor(self, lib):
-        """ Create the destructor function for the module """
-        if hasattr(lib, "destructor"):
-            destructor = getattr(lib, "destructor")
-            destructor.restype = None
-            destructor.argtypes = []
-            self.destructor = destructor
+        # Create the cleanup function for the library.
+        self.close = lib.close
 
     def bind_to_module(self, module):
         """ Create the necessary attributes of `module` and set up its pydoc. """
@@ -344,8 +352,8 @@ class Interface:
         for func in self.functions:
             func.set_up_pydoc()
 
-        if hasattr(self, "destructor"):
-            module.close = self.destructor
+        # Bind the cleanup function to the module.
+        module.close = self.close
 
     def parse_logical_line(self, f):
         """ Parse a logical line from the header file.
@@ -493,6 +501,7 @@ class Interface:
         line = line.strip()
         return line
 
+
 class InterfaceFunctionWrapper:
     """ A class that represents a wrapper function and patterns to
     choose which functions it applies to. """
@@ -524,7 +533,10 @@ def create_interface(header_file, library_file,
                      module = None,
                      wrapper_modules = None):
     """ Load an interface from a C header file and shared library,
-    and bind that interface to the Python module `module`. """
+    and bind that interface to the Python module `module`.
+
+    This is the main public function for the entire package. """
+
     interface = Interface(wrapper_modules = wrapper_modules)
     interface.parse_header_file(header_file)
     interface.create_internals(library_file)
@@ -537,11 +549,3 @@ def create_interface(header_file, library_file,
 
     interface.bind_to_module(module)
     return module
-
-
-if __name__ == "__main__":
-    directory = "../c-backend/interface/"
-    header_file = directory + "interface.h"
-    library_file = directory + "interface.so"
-
-    create_interface(header_file, library_file, None)

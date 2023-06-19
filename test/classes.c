@@ -73,4 +73,5 @@ void interface_clean_up_box(struct box* b)
 __attribute__((destructor)) void destructor(void)
 {
     free(str_rtn);
+    str_rtn = NULL;
 }

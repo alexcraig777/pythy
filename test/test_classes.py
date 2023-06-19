@@ -2,6 +2,7 @@ import types
 
 from .. import interface
 
+interface.backend.default_mode = "sockapi"
 
 def test_basic_functionality():
     """ Tests basic functionality """
@@ -16,3 +17,5 @@ def test_basic_functionality():
     assert b.get_volume() == 72
     assert b.get_box_description() == b"This is a 3x4x6 box!"
     b.clean_up_box()
+
+    class_lib.close()

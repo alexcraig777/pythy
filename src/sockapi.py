@@ -8,7 +8,10 @@ import socket
 import struct
 import time
 
+
 class Socket:
+    """ A simple convenience wrapper around a socket """
+
     def __init__(self, host, port):
         self.sock = socket.socket()
         self.sock.connect((host, port))
@@ -45,12 +48,18 @@ class Socket:
 
 
 class Session:
+    """ A representation of a network session with a server """
     fmt_map = {ctypes.c_char: "c",
         ctypes.c_short: "h",
         ctypes.c_int: "i",
         ctypes.c_long: "l",
-        ctypes.c_size_t: "N",
-        ctypes.c_void_p: "p"}
+        ctypes.c_size_t: "Q",
+        ctypes.c_void_p: "Q"}
+
+    # Note: The "P" (void*) and "N" (size_t) struct format specs are
+    # only available when using native byte order, whereas we want to
+    # use "!". "Q" (unsigned long long) will work on x64. There's
+    # probably a simple workaround.
 
     def __init__(self, lib, host = "localhost", port = 55555,
                  debug = True):
@@ -63,16 +72,19 @@ class Session:
     def start_server(self):
         """ Actually kick off the C-side of the API in a new process """
         # Detect if either `sockapi` or `self.lib` don't exist.
-        with open("sockapi-server/sockapi") as f:
+        module_dir = os.path.dirname(__file__)
+        server_path = os.path.join(module_dir, "sockapi-server", "sockapi")
+        with open(server_path) as f:
             pass
         with open(self.lib) as f:
             pass
 
-        cmd = f"sockapi-server/sockapi {self.lib} {self.host} {self.port}"
+        cmd = f"{server_path} {self.lib} {self.host} {self.port}"
 
         if self.debug:
             vg = "valgrind --leak-check=full"
-            vg += " --track-origins=yes --show-leak-kinds=all "
+            vg += " --track-origins=yes --show-leak-kinds=all"
+            vg += " --log-file=vg-log.txt "
             cmd = vg + cmd
 
         args = cmd.split()
@@ -123,14 +135,18 @@ class Session:
                 self.sock.send_all(self._encode_arg(arg, ctype))
 
         # Next, send `0` for a string return or `1` for an int return.
-        if rtn_type == ctypes.c_char_p:
+        if rtn_type is None:
             rtn_flag = 0
+        elif rtn_type == ctypes.c_char_p:
+            rtn_flag = 2
         else:
             rtn_flag = 1
         self.sock.send_all(struct.pack("!I", rtn_flag))
 
         # And now we can receive the return value.
-        if rtn_type == ctypes.c_char_p:
+        if rtn_type is None:
+            rtn = None
+        elif rtn_type == ctypes.c_char_p:
             rtn = self.sock.recv_msg()
         else:
             rtn = self.sock.recv_all(8)
@@ -172,8 +188,7 @@ class Session:
         n = struct.calcsize(fmt)
         z, b = rtn[:-n], rtn[-n:]
         if any(z):
-            print(rtn)
-            raise ValueError("`rtn` (see above) is not a valid", ctype)
+            raise ValueError(f"{rtn} is not a valid {ctype}")
 
         return struct.unpack(fmt, b)[0]
 
@@ -195,7 +210,9 @@ if __name__ == "__main__":
                           [ctypes.c_char_p, ctypes.c_char_p],
                           ctypes.c_char_p)
 
-    mc = cat(b"madison", b" craig")
-    print("Received b'madison' + b' craig' = ", mc.decode())
+    m = b"madison"
+    c = b"craig"
+    mc = cat(m, c)
+    print(f"Received {m} + {c} = {mc}")
 
     s.stop_server()

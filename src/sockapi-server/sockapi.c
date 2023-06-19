@@ -10,6 +10,11 @@
 #include "socklib.h"
 
 
+#define RTN_VOID 0
+#define RTN_INT  1
+#define RTN_STR  2
+
+
 // Private function declarations.
 static int handle_call(int sockfd, void* lib);
 
@@ -40,6 +45,7 @@ int main(int argc, char** argv) {
         }
     }
 
+    // TODO: Clarify when to break.
     while (rtn == 0) {
         recv_n(sockfd, directive, sizeof(directive));
         if (strncmp(directive, "call", 4) == 0) {
@@ -50,6 +56,7 @@ int main(int argc, char** argv) {
         } else {
             printf("Received unknown directive `%4s`\n",
                    directive);
+            break;
         }
     }
 
@@ -57,7 +64,7 @@ int main(int argc, char** argv) {
 
     close(sockfd);
 
-    return 0;
+    return rtn;
 }
 
 
@@ -122,14 +129,11 @@ static int handle_call(int sockfd, void* lib) {
     } else {
         func_rtn = call_func(func_addr, num_args, args);
 
-        printf("Interpreting func_rtn %ld (%p) as a %s\n",
-               (int64_t) func_rtn, func_rtn, rtn_type ? "int": "string");
-
-        if (rtn_type == 0) {
+        if (rtn_type == RTN_STR) {
             // The return value is a string, so we need to send back
             // a message.
             send_msg(sockfd, func_rtn);
-        } else {
+        } else if (rtn_type == RTN_INT) {
             // The return value is an integer.
             func_rtn = (void*) be64toh((uint64_t) func_rtn);
             send_n(sockfd, &func_rtn, sizeof(func_rtn));
@@ -148,11 +152,6 @@ static int handle_call(int sockfd, void* lib) {
 
     free(args);
     free(arg_types);
-
-    // If the return value was a string, free it.
-    if (rtn_type == 0) {
-        free(func_rtn);
-    }
 
     return rtn;
 }

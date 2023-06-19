@@ -2,6 +2,7 @@ import types
 
 from .. import interface
 
+interface.backend.default_mode = "sockapi"
 
 def test_basic_functionality():
     """ Tests basic functionality """
