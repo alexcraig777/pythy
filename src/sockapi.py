@@ -93,15 +93,17 @@ class Session:
                                                       args = args)
         self.server_process.start()
 
-        # TODO: We somehow need to give the server enough time to start
-        # up before trying to connect to it. We could make it a client
-        # rather than a server, but we'd still need to know how long to
-        # wait before timing out.
-        time.sleep(2)
+        timeout = 2
+        start = time.time()
+        while True:
+            if time.time() > start + timeout:
+                raise TimeoutError("Failed to connect to server")
 
-        # TODO: Why does this sometimes fail to connect?
-        self.sock = Socket(self.host, self.port)
-
+            try:
+                self.sock = Socket(self.host, self.port)
+                break
+            except ConnectionRefusedError as e:
+                pass
 
     def stop_server(self):
         """ Send the exit command to the server process and join with it """
