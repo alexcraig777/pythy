@@ -1,11 +1,17 @@
+import pytest
 import types
 
 from .. import interface
 
-interface.backend.default_mode = "sockapi"
 
-def test_basic_functionality():
+modes = ["ctypes", "sockapi"]
+
+
+@pytest.mark.parametrize("mode", modes)
+def test_basic_functionality(mode):
     """ Tests basic functionality """
+    interface.backend.default_mode = mode
+
     class_lib = interface.create_interface("classes_basic.h", "./classes.so")
 
     r = class_lib.Rectangle(2, 5)

@@ -1,11 +1,17 @@
+import pytest
 import types
 
 from .. import interface
 
-interface.backend.default_mode = "sockapi"
 
-def test_basic_functionality():
+modes = ["ctypes", "sockapi"]
+
+
+@pytest.mark.parametrize("mode", modes)
+def test_basic_functionality(mode):
     """ Tests basic functionality """
+    interface.backend.default_mode = mode
+
     func_lib = interface.create_interface("funcs_basic.h", "./funcs.so")
 
     assert func_lib.add(1, 2) == 3
@@ -15,9 +21,12 @@ def test_basic_functionality():
 
     func_lib.close()
 
-def test_bind_to_prior_module():
+@pytest.mark.parametrize("mode", modes)
+def test_bind_to_prior_module(mode):
     """ Tests ability to bind to a prior module, rather than create one
     and bind to it internally """
+    interface.backend.default_mode = mode
+
     func_lib = types.ModuleType("func_lib")
     new_func_lib = interface.create_interface("funcs_basic.h",
                                               "./funcs.so",
@@ -31,8 +40,11 @@ def test_bind_to_prior_module():
 
     func_lib.close()
 
-def test_docs():
+@pytest.mark.parametrize("mode", modes)
+def test_docs(mode):
     """ Tests the function doc-string generation """
+    interface.backend.default_mode = mode
+
     func_lib = interface.create_interface("funcs_basic.h", "./funcs.so")
 
     # The name should be the basename of the header file up until
@@ -45,19 +57,25 @@ def test_docs():
 
     func_lib.close()
 
-def test_alias():
+@pytest.mark.parametrize("mode", modes)
+def test_alias(mode):
     """ Tests function aliasing """
+    interface.backend.default_mode = mode
+
     func_lib = interface.create_interface("funcs_alias.h",
                                           "./funcs.so")
     assert func_lib.cat(b"hel", b"lo!") == b"hello!"
 
     func_lib.close()
 
-def test_built_in_wrappers():
+@pytest.mark.parametrize("mode", modes)
+def test_built_in_wrappers(mode):
     """ Tests the built-in wrapper application
 
     In the header file we specify that all string arguments should be
     encoded, and all string returns decoded. """
+
+    interface.backend.default_mode = mode
 
     func_lib = interface.create_interface("funcs_built_in_wrappers.h",
                                           "./funcs.so")
@@ -66,12 +84,15 @@ def test_built_in_wrappers():
 
     func_lib.close()
 
-def test_custom_wrappers():
+@pytest.mark.parametrize("mode", modes)
+def test_custom_wrappers(mode):
     """ Tests application of built-in wrappers
 
     In the header file we specifiy:
     - the arguments to `add` should be incremented
     - the return value from `get_len` should be doubled """
+
+    interface.backend.default_mode = mode
 
     from . import custom_wrappers
     func_lib = interface.create_interface("funcs_custom_wrappers.h",
@@ -82,13 +103,16 @@ def test_custom_wrappers():
 
     func_lib.close()
 
-def test_func_regex():
+@pytest.mark.parametrize("mode", modes)
+def test_func_regex(mode):
     """ Tests simple regex matching for function wrapping
 
     In the header we specify that the `increment_args` applies only
     to `add` (by saying it applies to everything, then excluding the
     others), and that `double_rtn` applies to everything except
     `add`. """
+    interface.backend.default_mode = mode
+
     from . import custom_wrappers
     func_lib = interface.create_interface("funcs_simple_regex.h",
                                           "./funcs.so",
