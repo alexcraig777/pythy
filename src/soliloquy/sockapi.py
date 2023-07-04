@@ -72,19 +72,23 @@ class Session:
     def start_server(self):
         """ Actually kick off the C-side of the API in a new process """
         # Detect if either `sockapi` or `self.lib` don't exist.
-        module_dir = os.path.dirname(__file__)
-        server_path = os.path.join(module_dir, "sockapi-server", "sockapi")
-        with open(server_path) as f:
-            pass
-        with open(self.lib) as f:
-            pass
+        _check_server(verbose = True)
+        if not os.path.exists(self.lib):
+            raise FileNotFoundError(f"Library {self.lib} doesn't exist!")
 
+        module_dir = os.path.dirname(__file__)
+        sockapi_dir = os.path.join(module_dir, "sockapi-server")
+        server_path = os.path.join(sockapi_dir, "sockapi")
         cmd = f"{server_path} {self.lib} {self.host} {self.port}"
 
         if self.debug:
+            if not _check_valgrind():
+                msg = "Valgrind is required for debug mode, "
+                msg += "but is not installed!"
+                raise ValueError("msg")
             vg = "valgrind --leak-check=full"
             vg += " --track-origins=yes --show-leak-kinds=all"
-            vg += " --log-file=vg-log.txt "
+            vg += f" --log-file={sockapi_dir}/vg-log.txt "
             cmd = vg + cmd
 
         args = cmd.split()
@@ -193,6 +197,42 @@ class Session:
             raise ValueError(f"{rtn} is not a valid {ctype}")
 
         return struct.unpack(fmt, b)[0]
+
+
+def _check_server(verbose = True):
+    """ Check that the system can run the sockapi server
+
+    Returns True or raises an Error.
+
+    If the server exists, this returns True.
+    If not, it tries to build it and raises an Exception on failure """
+
+    module_dir = os.path.dirname(__file__)
+    server_path = os.path.join(module_dir, "sockapi-server", "sockapi")
+
+    if os.path.isfile(server_path):
+        return True
+
+    if os.system("gcc --version 2>/dev/null") != 0:
+        raise ValueError("The server is not built and gcc is not installed!")
+
+    make_script = os.path.join(module_dir, "sockapi-server", "make.sh")
+    if verbose:
+        print("Building the server . . .")
+    if os.system(make_script) != 0:
+        raise ValueError("Failed to build server!")
+
+    return True
+
+
+def _check_valgrind():
+    """ Checks whether Valgrind is installed on the system
+
+    Returns True or False """
+    if os.system("valgrind --version > /dev/null 2>&1") != 0:
+        return False
+    else:
+        return True
 
 
 if __name__ == "__main__":

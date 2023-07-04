@@ -1,0 +1,3 @@
+graft src/soliloquy/sockapi-server
+
+prune test

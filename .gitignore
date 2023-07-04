@@ -6,3 +6,10 @@
 .venv
 
 __pycache__
+
+# Created by setuptools
+dist
+*.egg-info
+
+# Log files created by sockapi
+*vg-log.txt

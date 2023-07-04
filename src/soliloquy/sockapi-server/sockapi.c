@@ -20,8 +20,8 @@ static int handle_call(int sockfd, void* lib);
 
 
 int main(int argc, char** argv) {
-    void* lib;
-    int sockfd;
+    void* lib = NULL;
+    int sockfd = -1;
     int rtn = 0;
     char directive[4];
 
@@ -60,9 +60,13 @@ int main(int argc, char** argv) {
         }
     }
 
-    dlclose(lib);
+    if (lib != NULL) {
+        dlclose(lib);
+    }
 
-    close(sockfd);
+    if (sockfd != -1) {
+        close(sockfd);
+    }
 
     return rtn;
 }
