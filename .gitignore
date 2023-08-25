@@ -4,6 +4,7 @@
 *.swp
 
 .venv
+.test-venv
 
 __pycache__
 
