@@ -1,7 +1,7 @@
 sub_dirs = src test
 
 dists = $(wildcard dist/*)
-test_dists = $(foreach d, $(dists), test-$(d))
+test_dist_targets = $(foreach d, $(dists), test-$(d))
 
 
 # Build the distributions.
@@ -14,15 +14,23 @@ dist: .venv clean
 	. .venv/bin/activate && pip install -r requirements.txt
 
 # Test all built distributions.
-# TODO: This has a bug: the $(test_dists) is evaluated before `dist`
-# is built, so the dists that are going to be tested are the ones
-# that were previously built, which may be wrong or even not exist.
-# Figure out how to make this evaluate only after `dist` is built.
-test_dists: dist $(test_dists)
+# This recursively calls make on the `_test_dists` rule.
+# This is necessary so that the `test_dist_targets` can be evaluated
+# afresh after the dists have all been built. Otherwise the wildcard
+# prereqs can't be guaranteed to exist.
+test_dists: dist
+	$(MAKE) _test_dists
+
+# This is recursively called from the `test_dists` rule so that the
+# wildcard prereqs are guaranteed to be evaluated after they have all
+# been built.
+_test_dists: $(test_dist_targets)
 	@echo "[+] All distros passed all tests!"
 
 # Test an individual distribution.
-$(test_dists): test-%: % test
+# Before we can run `pytest` in the `test` directory, we need to
+# build the shared objects in it.
+$(test_dist_targets): test-%: % test
 	@echo "[ ] Testing $< . . ."
 	rm -rf .test-venv
 	python3 -m venv .test-venv
