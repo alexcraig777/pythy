@@ -10,7 +10,7 @@ modes = ["ctypes", "sockapi"]
 @pytest.mark.parametrize("mode", modes)
 def test_basic_functionality(mode):
     """ Tests basic functionality """
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     class_lib = pythy.create_interface("classes_basic.h", "./classes.so")
 

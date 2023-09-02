@@ -236,7 +236,7 @@ def _check_valgrind():
 
 
 if __name__ == "__main__":
-    s = Session("../test/funcs.so", "localhost", debug=True)
+    s = Session("../../test/funcs.so", "localhost", debug=True)
 
     add = s.make_function("interface_add",
                           [ctypes.c_int, ctypes.c_int],

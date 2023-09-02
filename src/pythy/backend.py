@@ -16,6 +16,21 @@ from . import sockapi
 default_mode = "ctypes"
 
 
+def set_mode(mode):
+    """ Set the module of operation
+
+    Options for `mode`:
+    - ctypes: Run the compiled code in the same process, mediated by
+              the `ctypes` package.
+    - sockapi: Run the compiled code in a different process with
+               function calls made by the custom `sockapi` module.
+    """
+    global default_mode
+    if mode not in Backend._modes:
+        raise ValueError(f"Unsupported backend mode: {mode}")
+    default_mode = mode
+
+
 class Backend:
     _modes = {"ctypes", "sockapi"}
 

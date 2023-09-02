@@ -10,7 +10,7 @@ modes = ["ctypes", "sockapi"]
 @pytest.mark.parametrize("mode", modes)
 def test_basic_functionality(mode):
     """ Tests basic functionality """
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     func_lib = pythy.create_interface("funcs_basic.h", "./funcs.so")
 
@@ -25,7 +25,7 @@ def test_basic_functionality(mode):
 def test_bind_to_prior_module(mode):
     """ Tests ability to bind to a prior module, rather than create one
     and bind to it internally """
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     func_lib = types.ModuleType("func_lib")
     new_func_lib = pythy.create_interface("funcs_basic.h",
@@ -43,7 +43,7 @@ def test_bind_to_prior_module(mode):
 @pytest.mark.parametrize("mode", modes)
 def test_docs(mode):
     """ Tests the function doc-string generation """
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     func_lib = pythy.create_interface("funcs_basic.h", "./funcs.so")
 
@@ -60,7 +60,7 @@ def test_docs(mode):
 @pytest.mark.parametrize("mode", modes)
 def test_alias(mode):
     """ Tests function aliasing """
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     func_lib = pythy.create_interface("funcs_alias.h",
                                           "./funcs.so")
@@ -75,7 +75,7 @@ def test_built_in_wrappers(mode):
     In the header file we specify that all string arguments should be
     encoded, and all string returns decoded. """
 
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     func_lib = pythy.create_interface("funcs_built_in_wrappers.h",
                                           "./funcs.so")
@@ -92,7 +92,7 @@ def test_custom_wrappers(mode):
     - the arguments to `add` should be incremented
     - the return value from `get_len` should be doubled """
 
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     import custom_wrappers
     func_lib = pythy.create_interface("funcs_custom_wrappers.h",
@@ -111,7 +111,7 @@ def test_func_regex(mode):
     to `add` (by saying it applies to everything, then excluding the
     others), and that `double_rtn` applies to everything except
     `add`. """
-    pythy.backend.default_mode = mode
+    pythy.backend.set_mode(mode)
 
     import custom_wrappers
     func_lib = pythy.create_interface("funcs_simple_regex.h",
