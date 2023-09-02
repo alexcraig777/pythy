@@ -108,7 +108,7 @@ int make_connection(char* host, char* port) {
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
 
-    printf("Getting addrinfo for %s:%s\n", host, port);
+    //printf("Getting addrinfo for %s:%s\n", host, port);
 
     // Get the actual address we can bind to.
     sub_rtn = getaddrinfo(host, port, &hints, &result);
@@ -141,13 +141,13 @@ int make_connection(char* host, char* port) {
         }
     }
 
-    printf("About to accept!\n");
+    //printf("About to accept!\n");
 
     // Accept.
     if (listen_sock != -1) {
         rtn_sock = accept(listen_sock, &client_addr,
                            &client_addr_size);
-        printf("Accepted %d\n", rtn_sock);
+        //printf("Accepted %d\n", rtn_sock);
         close(listen_sock);
     } else {
         rtn_sock = -1;

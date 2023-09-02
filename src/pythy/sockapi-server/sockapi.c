@@ -51,11 +51,11 @@ int main(int argc, char** argv) {
         if (strncmp(directive, "call", 4) == 0) {
             rtn = handle_call(sockfd, lib);
         } else if (strncmp(directive, "exit", 4) == 0) {
-            printf("Received request to exit\n");
+            //printf("Received request to exit\n");
             break;
         } else {
-            printf("Received unknown directive `%4s`\n",
-                   directive);
+            //printf("Received unknown directive `%4s`\n",
+            //       directive);
             break;
         }
     }
@@ -111,13 +111,13 @@ static int handle_call(int sockfd, void* lib) {
             recv_n(sockfd, args + i, sizeof(args[i]));
             args[i] = (void*) be64toh((uint64_t) args[i]);
 
-            printf("Received integer argument #%d: %ld (0x%lx)\n", i,
-                   (uint64_t) args[i], (uint64_t) args[i]);
+            //printf("Received integer argument #%d: %ld (0x%lx)\n", i,
+            //       (uint64_t) args[i], (uint64_t) args[i]);
         } else {
             args[i] = calloc(arg_types[i] + 1, 1);
             recv_n(sockfd, args[i], arg_types[i]);
-            printf("Received string argument #%d: %s\n",
-                   i, (char*) args[i]);
+            //printf("Received string argument #%d: %s\n",
+            //       i, (char*) args[i]);
         }
     }
 
@@ -128,7 +128,7 @@ static int handle_call(int sockfd, void* lib) {
     func_addr = dlsym(lib, func_name);
 
     if (func_addr == NULL) {
-        printf("Unknown function: %s\n", func_name);
+        //printf("Unknown function: %s\n", func_name);
         rtn = -1;
     } else {
         func_rtn = call_func(func_addr, num_args, args);
