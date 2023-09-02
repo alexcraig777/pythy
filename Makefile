@@ -3,13 +3,13 @@ test_dist_targets = $(foreach d, $(dists), test-$(d))
 
 
 # Build the distributions.
-dist: .venv clean
-	. .venv/bin/activate && python3 -m build
+dist: .build-venv clean
+	. .build-venv/bin/activate && python3 -m build
 
 # Make the virtual environment from the requirements file.
-.venv: requirements.txt
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r requirements.txt
+.build-venv: build-requirements.txt
+	python3 -m venv .build-venv
+	. .build-venv/bin/activate && pip install -r build-requirements.txt
 
 # Test all built distributions.
 # This recursively calls make on the `_test_dists` rule.

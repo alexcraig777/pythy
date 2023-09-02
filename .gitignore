@@ -3,7 +3,7 @@
 
 *.swp
 
-.venv
+.build-venv
 .test-venv
 
 __pycache__
