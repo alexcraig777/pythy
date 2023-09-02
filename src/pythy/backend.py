@@ -9,6 +9,7 @@ This can operate in 2 modes:
 """
 
 import ctypes
+import os
 
 from . import sockapi
 
@@ -35,6 +36,9 @@ class Backend:
     _modes = {"ctypes", "sockapi"}
 
     def __init__(self, library_file, mode = None):
+        if not (library_file.startswith("/") or
+                library_file.startswith(".")):
+            library_file = os.path.join(".", library_file)
         self.library_file = library_file
         if mode is None:
             self.mode = default_mode

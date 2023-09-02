@@ -12,7 +12,7 @@ def test_basic_functionality(mode):
     """ Tests basic functionality """
     pythy.backend.set_mode(mode)
 
-    class_lib = pythy.create_interface("classes_basic.h", "./classes.so")
+    class_lib = pythy.create_interface("classes_basic.h", "classes.so")
 
     r = class_lib.Rectangle(2, 5)
     assert r.get_area() == 10
