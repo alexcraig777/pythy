@@ -38,7 +38,7 @@ and `add.h` with
 int add(int a, int b);
 ```
 
-The compile `add.c` into a Linux shared object with the command
+Then compile `add.c` into a Linux shared object with the command
 `gcc -fPIC -shared funcs.c -o funcs.so`.
 
 Then run the following Python code, which creates a module `module`
