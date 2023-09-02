@@ -1,9 +1,10 @@
-# Wrap SO
+# pythy
 
 ## Overview
 
-`wrapso` dynamically generates a Python interface for calling functions in a
-shared library using the interface exposed by a C header file.
+`pythy` dynamically generates a Python interface for calling
+functions in a shared library using the interface exposed by a
+C header file.
 
 
 ## Memory spaces

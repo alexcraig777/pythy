@@ -2,7 +2,7 @@ import pytest
 import types
 
 
-import soliloquy
+import pythy
 
 modes = ["ctypes", "sockapi"]
 
@@ -10,9 +10,9 @@ modes = ["ctypes", "sockapi"]
 @pytest.mark.parametrize("mode", modes)
 def test_basic_functionality(mode):
     """ Tests basic functionality """
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
-    class_lib = soliloquy.create_interface("classes_basic.h", "./classes.so")
+    class_lib = pythy.create_interface("classes_basic.h", "./classes.so")
 
     r = class_lib.Rectangle(2, 5)
     assert r.get_area() == 10

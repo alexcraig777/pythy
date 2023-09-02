@@ -1,7 +1,7 @@
 import pytest
 import types
 
-import soliloquy
+import pythy
 
 
 modes = ["ctypes", "sockapi"]
@@ -10,9 +10,9 @@ modes = ["ctypes", "sockapi"]
 @pytest.mark.parametrize("mode", modes)
 def test_basic_functionality(mode):
     """ Tests basic functionality """
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
-    func_lib = soliloquy.create_interface("funcs_basic.h", "./funcs.so")
+    func_lib = pythy.create_interface("funcs_basic.h", "./funcs.so")
 
     assert func_lib.add(1, 2) == 3
     assert func_lib.get_len(b"hello") == 5
@@ -25,10 +25,10 @@ def test_basic_functionality(mode):
 def test_bind_to_prior_module(mode):
     """ Tests ability to bind to a prior module, rather than create one
     and bind to it internally """
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
     func_lib = types.ModuleType("func_lib")
-    new_func_lib = soliloquy.create_interface("funcs_basic.h",
+    new_func_lib = pythy.create_interface("funcs_basic.h",
                                               "./funcs.so",
                                               module = func_lib)
     assert new_func_lib is func_lib
@@ -43,9 +43,9 @@ def test_bind_to_prior_module(mode):
 @pytest.mark.parametrize("mode", modes)
 def test_docs(mode):
     """ Tests the function doc-string generation """
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
-    func_lib = soliloquy.create_interface("funcs_basic.h", "./funcs.so")
+    func_lib = pythy.create_interface("funcs_basic.h", "./funcs.so")
 
     # The name should be the basename of the header file up until
     # the last period.
@@ -60,9 +60,9 @@ def test_docs(mode):
 @pytest.mark.parametrize("mode", modes)
 def test_alias(mode):
     """ Tests function aliasing """
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
-    func_lib = soliloquy.create_interface("funcs_alias.h",
+    func_lib = pythy.create_interface("funcs_alias.h",
                                           "./funcs.so")
     assert func_lib.cat(b"hel", b"lo!") == b"hello!"
 
@@ -75,9 +75,9 @@ def test_built_in_wrappers(mode):
     In the header file we specify that all string arguments should be
     encoded, and all string returns decoded. """
 
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
-    func_lib = soliloquy.create_interface("funcs_built_in_wrappers.h",
+    func_lib = pythy.create_interface("funcs_built_in_wrappers.h",
                                           "./funcs.so")
     assert func_lib.get_len("hello") == 5
     assert func_lib.concatenate("hel", "lo!") == "hello!"
@@ -92,10 +92,10 @@ def test_custom_wrappers(mode):
     - the arguments to `add` should be incremented
     - the return value from `get_len` should be doubled """
 
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
     import custom_wrappers
-    func_lib = soliloquy.create_interface("funcs_custom_wrappers.h",
+    func_lib = pythy.create_interface("funcs_custom_wrappers.h",
                                           "./funcs.so",
                                           wrapper_modules = [custom_wrappers])
     assert func_lib.add(3, 5) == 10
@@ -111,10 +111,10 @@ def test_func_regex(mode):
     to `add` (by saying it applies to everything, then excluding the
     others), and that `double_rtn` applies to everything except
     `add`. """
-    soliloquy.backend.default_mode = mode
+    pythy.backend.default_mode = mode
 
     import custom_wrappers
-    func_lib = soliloquy.create_interface("funcs_simple_regex.h",
+    func_lib = pythy.create_interface("funcs_simple_regex.h",
                                           "./funcs.so",
                                           wrapper_modules = [custom_wrappers])
 

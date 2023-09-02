@@ -1,5 +1,3 @@
-sub_dirs = src test
-
 dists = $(wildcard dist/*)
 test_dist_targets = $(foreach d, $(dists), test-$(d))
 
@@ -29,7 +27,7 @@ _test_dists: $(test_dist_targets)
 
 # Test an individual distribution.
 # Before we can run `pytest` in the `test` directory, we need to
-# build the shared objects in it.
+# build the shared objects in it (accomplished by `test`).
 $(test_dist_targets): test-%: % test
 	@echo "[ ] Testing $< . . ."
 	rm -rf .test-venv
@@ -40,12 +38,12 @@ $(test_dist_targets): test-%: % test
 	@echo "[+] Distribution $< passed all tests"
 
 
-# Making a sub-directory just calls `make` in that directory.
-$(sub_dirs):
+test:
 	$(MAKE) -C $@
 
 clean:
-	rm -rf __pycache__ .pytest_cache .test-venv dist
-	$(foreach dir, $(sub_dirs), $(MAKE) -C $(dir) $@;)
+	rm -rf __pycache__ .pytest_cache .test-venv dist src/*.egg-info
+	$(MAKE) -C test $@
+	$(MAKE) -C src/pythy $@
 
-.PHONY: $(sub_dirs) clean test-dists
+.PHONY: test clean test_dists _test_dists $(test_dist_targets)
