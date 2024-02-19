@@ -22,6 +22,8 @@ automated testing.
 
 ## Minimal example
 
+TODO: Double check, update, and add to source code.
+
 Create `add.c` with the following contents:
 
 ```c
@@ -86,3 +88,8 @@ and returned.
 
 This doesn't scale well to multi-threaded programs, but for now it seems
 like the easiest way to do things.
+
+
+## Links
+
+[github](https://github.com/alexcraig777/pythy)
