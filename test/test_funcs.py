@@ -68,7 +68,7 @@ def test_alias(mode):
 
 @pytest.mark.parametrize("mode", modes)
 def test_built_in_wrappers(mode):
-    """ Tests the built-in wrapper application
+    """ Tests the built-in wrappers
 
     In the header file we specify that all string arguments should be
     encoded, and all string returns decoded. """
@@ -84,7 +84,7 @@ def test_built_in_wrappers(mode):
 
 @pytest.mark.parametrize("mode", modes)
 def test_custom_wrappers(mode):
-    """ Tests application of built-in wrappers
+    """ Tests custom wrappers
 
     In the header file we specifiy:
     - the arguments to `add` should be incremented
