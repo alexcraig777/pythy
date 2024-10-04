@@ -91,15 +91,16 @@ class Backend:
             self.lib.stop_server()
             rtn = True
 
-            with open("vg-log.txt", "r") as f:
-                vg_log = f.read()
+            if self.lib.vg_log is not None:
+                with open(self.lib.vg_log, "r") as f:
+                    vg_log = f.read()
 
-            if "0 errors from 0 contexts" not in vg_log:
-                print("==========================")
-                print(vg_log)
-                print("==========================")
-                raise ValueError("Valgrind found errors!")
-            else:
-                print("Valgrind reported no errors!")
+                if "0 errors from 0 contexts" not in vg_log:
+                    print("==========================")
+                    print(vg_log)
+                    print("==========================")
+                    raise ValueError("Valgrind found errors!")
+                else:
+                    print("Valgrind reported no errors!")
 
         return rtn

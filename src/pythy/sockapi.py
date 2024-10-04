@@ -68,6 +68,7 @@ class Session:
         self.port = port
         self.debug = debug
         self.start_server()
+        self.vg_log = None
 
     def start_server(self):
         """ Actually kick off the C-side of the API in a new process """
@@ -86,9 +87,10 @@ class Session:
                 msg = "Valgrind is required for debug mode, "
                 msg += "but is not installed!"
                 raise ValueError(msg)
+            self.vg_log = f"{sockapi_dir}/vg-log.txt"
             vg = "valgrind --leak-check=full"
             vg += " --track-origins=yes --show-leak-kinds=all"
-            vg += f" --log-file={sockapi_dir}/vg-log.txt "
+            vg += f" --log-file={self.vg_log} "
             cmd = vg + cmd
 
         args = cmd.split()
