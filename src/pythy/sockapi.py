@@ -85,7 +85,7 @@ class Session:
             if not _check_valgrind():
                 msg = "Valgrind is required for debug mode, "
                 msg += "but is not installed!"
-                raise ValueError("msg")
+                raise ValueError(msg)
             vg = "valgrind --leak-check=full"
             vg += " --track-origins=yes --show-leak-kinds=all"
             vg += f" --log-file={sockapi_dir}/vg-log.txt "
