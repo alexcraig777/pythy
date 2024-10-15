@@ -4,99 +4,115 @@ Create a Python module to interface with a compiled library
 Stages of processing
 --------------------
 
-1. Parse the header file (parse all directives and find all functions).
-   - This stage creates many InterfaceFunction and InterfaceClass
+#. Parse the header file (parse all directives and find all functions).
+
+   * This stage creates many InterfaceFunction and InterfaceClass
      instances.
 
-2. Create the actual internal Python classes and functions dynamically.
-   - The classes are created using Python's `type` function.
-   - The functions are loaded from the shared library using `backend.py`,
-     which uses either `ctypes` or `sockapi.py`.
-   - This stage also applies all necessary wrappers to the new Python
+#. Create the actual internal Python classes and functions dynamically.
+
+   * The classes are created using Python's ``type`` function.
+   * The functions are loaded from the shared library using
+     ``backend.py``, which uses either ``ctypes`` or ``sockapi.py``.
+   * This stage also applies all necessary wrappers to the new Python
      functions.
 
-3. Bind the classes and functions to the given module.
-   - This stage also uses information from the header file to fill
+#. Bind the classes and functions to the given module.
+
+   * This stage also uses information from the header file to fill
      in fields that will generate nice pydocs for the functions.
 
 
 Directives
 ----------
 
-Directives are read from comment lines following a "$" character.
+Directives are read from comment lines following a ``$`` character.
 
-a. define <old-str> -> <new-str>
-   - used to do text replacement
-   - This is the only directive where the arguments can contain spaces.
+#. ``define <old-str> -> <new-str>``
 
-b. class <c-arg-name> [py-name]
-   - used to indicate that there's a Python class that will absorb
+   * used to do text replacement
+   * This is the only directive where the arguments can contain spaces.
+
+#. ``class <c-arg-name> [py-name]``
+
+   * used to indicate that there's a Python class that will absorb
      some of the interface functions as methods
-   - If `py-name` is ommitted, Python will choose a nicely formatted
-     one based on `c-arg-name`.
+   * If ``py-name`` is ommitted, Python will choose a nicely formatted
+     one based on ``c-arg-name``.
 
-c. init <cls-name> <func>
-   - used to indicate that a function should be used as the __init__
-     method for a class
-   - At one point I thought we could do this purely by aliasing the
-     function to "__init__", but it's first parameter doesn't have the
+#. ``init <cls-name> <func>``
+
+   * used to indicate that a function should be used as the
+     ``__init__`` method for a class
+   * At one point I thought we could do this purely by aliasing the
+     function to ``__init__``, but it's first parameter doesn't have the
      right name, so it wouldn't work.
 
-d. func_alias <c-name> <py-name>
-   - used to specify an alternate Python name for a function
+#. ``func_alias <c-name> <py-name>``
 
-e. wrapper[_update] <wrapper-name> <patterns>
-   - used to initialize (or update) a wrapper to apply to certain
+   * used to specify an alternate Python name for a function
+
+#. ``wrapper[_update] <wrapper-name> <patterns>``
+
+   * used to initialize (or update) a wrapper to apply to certain
      functions in the interface
-   - see more under "Wrappers", below
-   - the first wrapper directive for a wrapper must be `wrapper`; all
-     following directives for the same wrapper must be `wrapper-update`.
-   - <patterns> is a space-separated list of mini-regexes that will be
+   * see more under "Wrappers", below
+   * the first wrapper directive for a wrapper must be ``wrapper``; all
+     following directives for the same wrapper must be ``wrapper-update``.
+   * ``<patterns>`` is a space-separated list of mini-regexes that will be
      used to determine what functions the wrapper should be applied to.
-   - a mini-regex has the following format:
-     - optional "!": ignore functions that match this pattern, instead
+   * a mini-regex has the following format:
+
+     * optional ``!``: ignore functions that match this pattern, instead
        of including them
-     - optional "@": apply pattern to class name, instead of C name
-     - The remainder is a list of sub-patterns, separated by "|", which
-       are "or"ed together.
-     - Each sub-pattern can contain regular characters and the speial
-       character "*" to match any substring.
-     - For class patterns only, the special character "#" indicates a
+     * optional ``@``: apply pattern to class name, instead of C name
+     * The remainder is a list of sub-patterns, separated by ``|``, which
+       are ORed together.
+     * Each sub-pattern can contain regular characters and the speial
+       character ``*`` to match any substring.
+     * For class patterns only, the special character ``#`` indicates a
        class of "None" (i.e., the function does not belong in a class).
        All other positive class patterns will ignore functions that
        don't belong to a class. See the examples.
 
-   - To determine whether to apply a given wrapper to a function, the
+   * To determine whether to apply a given wrapper to a function, the
      program will apply each pattern from the list in order to the
      function (either it's C name or its class name, as determined by
-     whether the pattern has a leading "@"). The default is not to
+     whether the pattern has a leading ``@``). The default is not to
      apply it.
 
-   - Examples:
-     $ wrapper my_wrapper @#
-     - This wrapper will be applied to all functions that are not in a
-       class. An equivalent pattern list would be "* !@*" (in which the
-       initial "*" means apply to all functions; the "!@*" means ignore
-       functions whose class names match "*", which is all classes that
+   * Examples:
+
+     * ``$ wrapper my_wrapper @#``
+
+       This wrapper will be applied to all functions that are not in a
+       class. An equivalent pattern list would be ``* !@*`` (in which the
+       initial ``*`` means apply to all functions; the ``!@*`` means ignore
+       functions whose class names match ``*``, which is all classes that
        exist).
 
-     $ wrapper my_wrapper @*
-     - This wrapper will be applied to all functions that are in a class.
-       An equivalent pattern list would be "* !@#".
+     * ``$ wrapper my_wrapper @*``
 
-     $ wrapper my_wrapper interface_free_buffer
-     - This wrapper matches only the function `interface_free_buffer`.
+       This wrapper will be applied to all functions that are in a class.
+       An equivalent pattern list would be ``* !@#``.
 
-     $ wrapper my_wrapper * !interface_free_buffer
-     - This wrapper matches all functions except `interface_free_buffer`.
+     * ``$ wrapper my_wrapper interface_free_buffer``
+
+       This wrapper matches only the function `interface_free_buffer`.
+
+     * ``$ wrapper my_wrapper * !interface_free_buffer``
+
+       This wrapper matches all functions except
+       ``interface_free_buffer``.
 
 Wrappers
 --------
 
 The Interface instance keeps track of all registered wrappers.
 
-It automatically registers wrapper_init_method and wrapper_generic_method
-(the ones that take care of methods in classes) in its __init__ method.
+It automatically registers ``wrapper_init_method`` and
+``wrapper_generic_method`` (the ones that take care of methods in
+classes) in its ``__init__`` method.
 
 Other wrappers are added or modified as indicated by the header file.
 """
@@ -168,8 +184,8 @@ class InterfaceFunction:
     def load_py_func(self, lib):
         """ Load the actual function from the library
 
-        This uses the backend (ctypes or sockapi) selected by
-        `backend.default_mode`. """
+        This uses the backend (``ctypes`` or ``sockapi``) selected by
+        ``backend.default_mode``. """
         arg_types = [param.type.c_type for param in self.c_params]
         self.py_func = lib.get_function(self.c_name,
                                         arg_types,
@@ -191,9 +207,10 @@ class InterfaceFunction:
             wrapper(self)
 
     def bind(self, module):
-        """ Bind this function to its class, or `module`, if it has none.
+        """ Bind this function to its class, or ``module``, if it has
+        none.
 
-        In either case, set `self.module` for use in pydocs. """
+        In either case, set ``self.module`` for use in pydocs. """
 
         if self.cls is None:
             setattr(module, self.py_name, self.py_func)
@@ -206,7 +223,7 @@ class InterfaceFunction:
         """ Set up the stuff required for producing a clean pydoc.
 
         A lot of this uses somewhat undocumented internals from the
-        `inspect` module, which is used by pydoc to generate the
+        ``inspect`` module, which is used by pydoc to generate the
         documentation. """
 
         self.py_func.__name__ = self.py_name
@@ -220,8 +237,8 @@ class InterfaceFunction:
     def add_to_class(self, cls):
         """ Update to reflect that this function is a method of a class.
 
-        For __init__ methods, it's essential that by this point the
-        function's `py_name` be changed to "__init__". """
+        For ``__init__`` methods, it's essential that by this point the
+        function's ``py_name`` be changed to ``__init__``. """
 
         self.cls = cls
 
@@ -262,7 +279,7 @@ class InterfaceClass:
         self.cls = type(self.py_name, (), dict())
 
     def bind_to_module(self, module):
-        """ Bind the class to `module` and set `self.module`. """
+        """ Bind the class to ``module`` and set ``self.module``. """
 
         setattr(module, self.py_name, self.cls)
         self.module = module
@@ -270,7 +287,8 @@ class InterfaceClass:
     def set_up_pydoc(self):
         """ Set up the stuff required for producing a clean pydoc.
 
-        This is not responsible for setting up pydocs for its methods. """
+        This is not responsible for setting up pydocs for its
+        methods. """
 
         self.cls.__module__ = self.module.__name__
 
@@ -279,9 +297,9 @@ class Interface:
     """ A representation of a Python interface to a compiled library
 
     The main public methods are:
-    - parse_header_file
-    - create_internals
-    - bind_to_module
+    * ``parse_header_file``
+    * ``create_internals``
+    * ``bind_to_module``
 
     Once the interface has been bound to a Python module, it's no
     longer needed. """
@@ -313,13 +331,14 @@ class Interface:
         """ Parse a C header file.
 
         This reads all the directives and creates all the contained
-        InterfaceFunctions and InterfaceClasses. """
+        `` InterfaceFunctions`` and ``InterfaceClasses``. """
         with open(header_file, "r") as f:
             while self.parse_logical_line(f):
                 pass
 
     def create_internals(self, library_file):
-        """ Actually create the internal Python classes and functions. """
+        """ Actually create the internal Python classes and
+        functions. """
 
         for cls in self.classes.values():
             cls.create_py_class()
@@ -341,7 +360,8 @@ class Interface:
         self.close = lib.close
 
     def bind_to_module(self, module):
-        """ Create the necessary attributes of `module` and set up its pydoc. """
+        """ Create the necessary attributes of ``module`` and set up
+        its pydoc. """
         for cls in self.classes.values():
             cls.bind_to_module(module)
         for func in self.functions:
@@ -512,10 +532,11 @@ class InterfaceFunctionWrapper:
         self.mini_regexes = mini_regexes
 
     def check_apply_to_function(self, interface_function):
-        """ Check if we should apply this wrapper to `interface_function`.
+        """ Check if we should apply this wrapper to
+        ``interface_function``.
 
-        This is the result of checking if `interface_function` is accepted
-        by each mini-regex, in order. """
+        This is the result of checking if ``interface_function`` is
+        accepted by each mini-regex, in order. """
 
         rtn = False
 
@@ -533,7 +554,7 @@ def create_interface(header_file, library_file,
                      module = None,
                      wrapper_modules = None):
     """ Load an interface from a C header file and shared library,
-    and bind that interface to the Python module `module`.
+    and bind that interface to the Python module ``module``.
 
     This is the main public function for the entire package. """
 
