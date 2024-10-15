@@ -6,6 +6,10 @@ import pythy
 
 modes = ["ctypes", "sockapi"]
 
+def test_get_started():
+    """ Test the "Get Started" example from the docs """
+    adder = pythy.create_interface("add.h", "add.so")
+    assert adder.add(1, 2) == 3
 
 @pytest.mark.parametrize("mode", modes)
 def test_basic_functionality(mode):
