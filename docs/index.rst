@@ -8,6 +8,7 @@ pythy: a clean Python interface to compiled code
     get-started
     main
     issues
+    directives
 
 Welcome to ``pythy``! Thanks for coming.
 

@@ -7,7 +7,7 @@ I'm running into these issues as I try to use ``pythy`` to interface
 with my debugger.
 
 * You should be able to use multiple distinct header files. A single
-  shared object will probably have the interface split across multiple
+  shared object will probably have its interface split across multiple
   headers.
 
 * You shouldn't have to use a prefix like ``interface_`` in front of
@@ -15,11 +15,18 @@ with my debugger.
   because it encourages writing thin C wrappers instead of using
   what's already there.
 
+  I think the original purpose of the prefix was to allow some functions
+  in the header file not to be wrapped. We can add a directive for this
+  kind of private function.
+
 * There should be a clean way to handle byte arrays that contain
   the zero byte. By default, ``ctypes`` assumes byte arrays are
   null-terminated, but if you're, e.g., reading memory, you
   probably want to be able to return a byte array containg a zero byte
   from C to Python.
+
+  Maybe there can be a new directive that gives the length in bytes
+  of an array as an expression of other function parameters.
 
 * Currently a lot of my interface functions return strings that it
   expects Python to parse (for example, to return info on stack frames,
@@ -41,5 +48,12 @@ with my debugger.
   option 2 doesn't require any changes to ``pythy``, but it's more work
   from the C side.
 
+  To make the result from option 2 more Pythonic, ``pythy`` should
+  be able to create Python properties when there are methods ``get_x``
+  and ``set_x``.
+
 * How do we handle freeing buffers? The interface probably shouldn't
   have to worry about this.
+
+* I think wrappers were honestly a terrible idea. They should probably
+  be applied in Python code after the interface is created.
