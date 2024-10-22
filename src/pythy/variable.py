@@ -2,8 +2,6 @@
 
 import ctypes
 
-from . import split
-
 
 class Type:
     """ A class representing ctypes types. """
@@ -35,7 +33,7 @@ class Parameter:
     """ A class representing parameters to C functions. """
 
     def __init__(self, param_str):
-        type_str, self.name = split.split_at_last_space(param_str)
+        type_str, self.name = param_str.rsplit(" ", 1)
         self.type = Type(type_str)
 
     def __str__(self):

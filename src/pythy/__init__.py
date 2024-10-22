@@ -123,7 +123,6 @@ import types
 
 from .regex import MiniRegex
 from . import backend
-from . import split
 from . import variable
 from . import wrappers as built_in_wrapper_module
 
@@ -142,8 +141,7 @@ class InterfaceFunction:
         first_half, param_half = prototype[: -2].split("(")
 
         # Find the function's return type and C name.
-        rtn_type_str, c_name = split.split_at_last_space(first_half)
-        self.c_name = c_name
+        rtn_type_str, self.c_name = first_half.rsplit(" ", 1)
         self.rtn_type = variable.Type(rtn_type_str)
 
         # Parse out the parameters.
