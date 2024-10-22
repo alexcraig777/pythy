@@ -48,7 +48,7 @@ with my debugger.
   option 2 doesn't require any changes to ``pythy``, but it's more work
   from the C side.
 
-  To make the result from option 2 more Pythonic, ``pythy`` should
+* To make the result from option 2 more Pythonic, ``pythy`` should
   be able to create Python properties when there are methods ``get_x``
   and ``set_x``.
 
@@ -57,3 +57,49 @@ with my debugger.
 
 * I think wrappers were honestly a terrible idea. They should probably
   be applied in Python code after the interface is created.
+
+* It would be great to be able to handle static inline functions exposed
+  in the header files. Although, such a function wouldn't actually be
+  compiled into the shared object itself, so I don't know how we could.
+
+* We should consider using ``pycparser`` to parse the header files for
+  us. There are just a few issues with this:
+
+  #. ``pycparser`` takes in preprocessed code, which is a bit of a pain.
+
+  #. ``pycparser`` can't handle comments (since they're removed by the
+     preprocessor), and since ``pythy`` needs to handle them, we'd
+     have to do at least some parsing manually.
+
+  #. The simplest solution I can think of is to parse the code manually
+     for comments and picking out function prototypes, then pass the
+     prototypes to ``pycparser`` for parsing. But, honestly, finding
+     the prototypes in the first place is the hardest part. And,
+     without using any preprocessor, I don't think ``pycparser`` would
+     be much more robust than I could do by hand.
+
+  Here's an example of the usage, since it's a bit intense:
+
+  .. code-block:: python
+
+      import pycparser
+
+      proto = "char* stuff(int a, struct thing* x);"
+      # Type FileAST
+      ast = pycparser.CParser().parse(proto)
+      # Type Decl
+      decl = ast.ext[0]
+      print("Return type:", decl.type.type)
+      for param in decl.type.args.params:
+          print(param.name, param.type)
+
+Solutions
+---------
+
+#. Modify the debugger to use ``pythy``.
+
+#. Modify ``pythy`` to:
+
+   * allow multiple header files
+   * remove the ``interface_`` prefix
+   * be able to ignore some functions

@@ -30,6 +30,11 @@ Directive Reference
 
    * This specifies an alternate Python name for a function
 
+#. TODO: ``private [c-func-name]``
+
+   * This prevents Python from creating a wrapper for the given C
+     function (the next C function, if ``c-func-name`` is not given).
+
 #. TODO: byte-array length specification
 
 #. TODO: specify property
