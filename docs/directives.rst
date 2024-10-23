@@ -9,7 +9,6 @@ Directive Reference
      contents before parsing it.
    * Each ``define`` directive only affects text *following it in the
      same file*.
-   * This is the only directive whose arguments can contain spaces.
    * We might really be able to do without this. Our current use cases
      are:
 
@@ -27,11 +26,11 @@ Directive Reference
      associated Python class.
    * TODO: The location of this directive does not matter: it applies to
      all functions in all files.
-   * If ``py-name`` is ommitted, Python will choose a nicely formatted
-     Python class name based on ``c-arg-name``.
+   * If ``py-name`` is ommitted, ``pythy`` will choose a nicely
+     formatted Python class name based on ``c-arg-name``.
    * TODO: Should there be a way to override this for a particular
      function?
-   * TODO: Should we use the parameter type instead of name?
+   * TODO: We should use the parameter type instead of name.
 
 #. ``init <c-arg-name> <c-func-name>``
 
@@ -44,6 +43,10 @@ Directive Reference
    * At one point I thought we could do this purely by aliasing the
      function to ``__init__``, but it's first parameter doesn't have the
      right name, so it wouldn't work.
+   * TODO: The C function will have to return a pointer to the type
+     associated with the class. So once we transition to using parameter
+     type instead of name for classes we can drop the ``c-arg-name``
+     argument to the directive.
 
 #. ``func_alias <c-func-name> <py-name>``
 
@@ -53,16 +56,36 @@ Directive Reference
      ``c-func-name`` is declared somewhere in some file, ``pythy`` will
      rename it.
 
-#. TODO: ``private [c-func-name]``
+#. TODO: ``private <c-func-name>``
 
    * This prevents Python from creating a wrapper for the given C
      function (the next C function, if ``c-func-name`` is not given).
-   * If ``c-func-name`` is given (and that function is declared in some
-     file), the location of this directive does not matter. Otherwise,
-     it will be applied to the immediately following function; if there
-     is no following function in the same header file, ``pythy`` will
+   * TODO: Allow implied ``c-func-name``.
+   * If ``c-func-name`` is given, the location of this directive does
+     not matter. Otherwise, ``pythy`` will apply this directive to the
+     immediately following function.
+   * If ``c-func-name`` is given and the function does not exist, or if
+     it is ommitted and there is no following function in the same
+     header file, ``pythy`` will raise an error.
+
+#. TODO: ``len <c-func-name>.<c-arg-name> <py-expression>``
+
+   * This tells ``pythy`` how many known-size units a returned pointer
+     points to.
+   * TODO: Allow implied ``c-func-name``.
+   * If ``c-func-name`` is given, the location of this directive does
+     not matter. Otherwise, ``pythy`` will apply this directive to the
+     immediately following function.
+   * If ``c-func-name`` is given and the function does not exist, or if
+     it is ommitted and there is no following function in the same
+     header file, ``pythy`` will raise an error. If the C function does
+     not have an argument named ``c-arg-name``, ``pythy`` will also
      raise an error.
+   * The primary use case is for returning raw binary data that may
+     contain internal zero bytes (e.g., reading debuggee memory).
+   * ``py-expression`` must be a valid Python expression that evaluates
+     to an integer. It may only reference integer-valued arguments
+     passed to the function.
+   * Is this really necessary?
 
-#. TODO: byte-array length specification
-
-#. TODO: specify property
+#. TODO: ``property <property-name>``

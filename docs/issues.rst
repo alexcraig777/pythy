@@ -52,8 +52,15 @@ with my debugger.
   be able to create Python properties when there are methods ``get_x``
   and ``set_x``.
 
-* How do we handle freeing buffers? The interface probably shouldn't
-  have to worry about this.
+* How do we handle freeing buffers? A few thoughts:
+
+  * There should be some way for the header file to indicate that the
+    user is responsible for freeing a buffer when they're done with it.
+  * The shared object shouldn't have to expose the standard ``free``
+    function, but it must expose custom cleanup functions.
+  * Maybe there should be a directive like
+    ``$ cleanup <arg-name> <cleanup-func>`` that tells ``pythy`` what
+    function should be called to cleanup the parameter?
 
 * I think wrappers were honestly a terrible idea. They should probably
   be applied in Python code after the interface is created.
@@ -61,6 +68,20 @@ with my debugger.
 * It would be great to be able to handle static inline functions exposed
   in the header files. Although, such a function wouldn't actually be
   compiled into the shared object itself, so I don't know how we could.
+
+* We should consider using reStructuredText directives to express
+  ``pythy`` directives in C header files.
+
+* We should look into using the ``ctypes`` ``_as_parameter_`` attribute
+  in wrapper classes.
+
+* We should be able to load ``libc`` in ``ctypes`` by running
+  ``libc = ctypes.util.find_library("c")``. This can be used to access
+  the standard ``free`` function without requiring the shared object
+  itself to expose it. I don't know how the ``sockapi`` backend could
+  handle this.
+
+* We should be able to handle C block comments.
 
 * We should consider using ``pycparser`` to parse the header files for
   us. There are just a few issues with this:
