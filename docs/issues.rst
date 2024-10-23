@@ -96,7 +96,9 @@ with my debugger.
 Solutions
 ---------
 
-#. Modify the debugger to use ``pythy``.
+#. Modify the debugger to use ``pythy`` *(done)*.
+
+#. Modify the debugger C code to integrate with next step.
 
 #. Modify ``pythy`` to:
 
