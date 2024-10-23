@@ -62,12 +62,12 @@ class InterfaceFunction:
 
         ### Check for Python keywords.
         if keyword.iskeyword(self.py_name):
-            raise ValueError("Function name '{}' is ".format(self.py_name) +
-                             "a Python keyword")
+            msg = "Function name '{self.py_name}' is a Python keyword"
+            raise ValueError(msg)
         for param in self.py_params:
             if keyword.iskeyword(param.name):
-                raise ValueError("Parameter name '{}' ".format(param.name) +
-                                 "is a Python keyword")
+                msg = "Parameter name '{param.name}' is a Python keyword"
+                raise ValueError(msg)
 
         self.cls = None
         self.wrappers = []
@@ -99,14 +99,12 @@ class InterfaceFunction:
         """ Register a wrapper to be applied later.
 
         Registered wrappers are applied in a FIFO order. """
-
         self.wrappers.append(wrapper)
 
     def apply_wrappers(self):
         """ Apply all registered wrappers.
 
         Wrappers are applied in the order they were registered. """
-
         for wrapper in reversed(self.wrappers):
             wrapper(self)
 
@@ -115,12 +113,10 @@ class InterfaceFunction:
         none.
 
         In either case, set ``self.module`` for use in pydocs. """
-
         if self.cls is None:
             setattr(module, self.py_name, self.py_func)
         else:
             setattr(self.cls.cls, self.py_name, self.py_func)
-
         self.module = module
 
     def set_up_pydoc(self):
@@ -129,7 +125,6 @@ class InterfaceFunction:
         A lot of this uses somewhat undocumented internals from the
         ``inspect`` module, which is used by pydoc to generate the
         documentation. """
-
         self.py_func.__name__ = self.py_name
         text_sig = "(" + ", ".join(param.name for param in self.py_params) + ")"
         self.py_func.__text_signature__ = text_sig
@@ -143,9 +138,7 @@ class InterfaceFunction:
 
         For ``__init__`` methods, it's essential that by this point the
         function's ``py_name`` be changed to ``__init__``. """
-
         self.cls = cls
-
         if self.py_name == "__init__":
             # This will take care of inserting the first "self" parameter.
             self.register_wrapper(built_in_wrapper_module.init_method)
@@ -173,18 +166,15 @@ class InterfaceClass:
 
     def add_function(self, func):
         """ Add a function as a method of this class. """
-
         self.funcs.append(func)
         func.add_to_class(self)
 
     def create_py_class(self):
         """ Actually create the Python class. """
-
         self.cls = type(self.py_name, (), dict())
 
     def bind_to_module(self, module):
         """ Bind the class to ``module`` and set ``self.module``. """
-
         setattr(module, self.py_name, self.cls)
         self.module = module
 
@@ -193,7 +183,6 @@ class InterfaceClass:
 
         This is not responsible for setting up pydocs for its
         methods. """
-
         self.cls.__module__ = self.module.__name__
 
 
@@ -207,7 +196,6 @@ class Interface:
 
     Once the interface has been bound to a Python module, it's no
     longer needed. """
-
     comment_marker = "//"
     directive_marker = "$"
 
@@ -243,7 +231,6 @@ class Interface:
     def create_internals(self, library_file):
         """ Actually create the internal Python classes and
         functions. """
-
         for cls in self.classes.values():
             cls.create_py_class()
 
@@ -284,7 +271,6 @@ class Interface:
 
         This will digest multiple lines from the header file if a
         function prototype is split over multiple lines. """
-
         line = f.readline()
         if not line:
             return False
@@ -321,7 +307,6 @@ class Interface:
 
     def parse_function_prototype(self, prototype):
         """ Parse a line that's a function prototype. """
-
         func = InterfaceFunction(prototype, self.current_doc.strip())
         cls = None
 
@@ -351,7 +336,6 @@ class Interface:
 
     def parse_directive_line(self, line):
         """ Parse a line that's a directive to our interpreter. """
-
         directive_string = line[line.index(self.directive_marker) + 1:]
         directive_string = directive_string.strip()
         directive = directive_string[:directive_string.index(" ")]
@@ -419,7 +403,6 @@ class Interface:
     @classmethod
     def _strip_whitespace_and_comment(cls, line):
         """ Strip trailing whitespace and comments from a line. """
-
         if cls.comment_marker in line:
             line = line[: line.index(cls.comment_marker)]
         line = line.strip()
@@ -441,7 +424,6 @@ class InterfaceFunctionWrapper:
 
         This is the result of checking if ``interface_function`` is
         accepted by each mini-regex, in order. """
-
         rtn = False
 
         for mini_regex in self.mini_regexes:
@@ -461,7 +443,6 @@ def create_interface(header_file, library_file,
     and bind that interface to the Python module ``module``.
 
     This is the main public function for the entire package. """
-
     interface = Interface(wrapper_modules = wrapper_modules)
     interface.parse_header_file(header_file)
     interface.create_internals(library_file)
