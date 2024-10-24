@@ -31,7 +31,8 @@ int main(int argc, char** argv) {
     } else {
         lib = dlopen(argv[1], RTLD_LAZY);
         if (lib == NULL) {
-            printf("Couldn't load library %s\n", argv[1]);
+            printf("Couldn't load library '%s'\n", argv[1]);
+            printf("Error: %s\n", dlerror());
             rtn = -1;
         }
     }
