@@ -36,8 +36,6 @@ from . import wrappers as built_in_wrapper_module
 class InterfaceFunction:
     """ A class representing functions in a Python-C interface """
 
-    interface_prefix = "interface_"
-
     def __init__(self, prototype, doc):
         # Make sure parentheses look right.
         assert "(" in prototype
@@ -57,8 +55,7 @@ class InterfaceFunction:
         self.c_params = [variable.Parameter(param_str) for param_str in param_strings]
         self.py_params = [variable.Parameter(str(param)) for param in self.c_params]
 
-        assert self.c_name.startswith(self.interface_prefix)
-        self.py_name = self.c_name.removeprefix(self.interface_prefix)
+        self.py_name = self.c_name
 
         ### Check for Python keywords.
         if keyword.iskeyword(self.py_name):
