@@ -6,24 +6,23 @@ import ctypes
 class Type:
     """ A class representing ctypes types. """
 
-    type_str_dict = {ctypes.c_char: "char",
-                     ctypes.c_short: "short",
-                     ctypes.c_int: "int",
-                     ctypes.c_long: "long",
-                     ctypes.c_bool: "bool",
-                     ctypes.c_size_t: "size_t",
-                     ctypes.c_char_p: "char*",
-                     ctypes.c_void_p: "void*",
-                     None: "void"}
+    type_str_dict = {"char": ctypes.c_char,
+                     "short": ctypes.c_short,
+                     "int": ctypes.c_int,
+                     "long": ctypes.c_long,
+                     "bool": ctypes.c_bool,
+                     "size_t": ctypes.c_size_t,
+                     "char*": ctypes.c_char_p,
+                     "void*": ctypes.c_void_p,
+                     "void": None
+    }
 
     def __init__(self, c_str):
         self.c_str = c_str
-        for ct, t_str in self.type_str_dict.items():
-            if t_str == c_str:
-                self.c_type = ct
-                break
+        if c_str in self.type_str_dict:
+            self.c_type = self.type_str_dict[c_str]
         else:
-            raise ValueError("type_str '{}' not understood".format(c_str))
+            raise ValueError(f"type_str '{c_str}' not understood")
 
     def __str__(self):
         return self.c_str
@@ -37,4 +36,4 @@ class Parameter:
         self.type = Type(type_str)
 
     def __str__(self):
-        return "{} {}".format(self.type, self.name)
+        return f"{self.type} {self.name}"
