@@ -50,9 +50,9 @@ def test_docs(mode):
 
     func_lib = pythy.create_interface("funcs_basic.h", "funcs.so")
 
-    # The name should be the basename of the header file up until
+    # The name should be the basename of the library file up until
     # the last period.
-    assert func_lib.__name__ == "funcs_basic"
+    assert func_lib.__name__ == "funcs"
 
     assert func_lib.add.__doc__ == "Adds 2 integers"
     assert func_lib.get_len.__doc__ == "Finds the length of a string"

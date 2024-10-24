@@ -190,7 +190,7 @@ class Interface:
     """ A representation of a Python interface to a compiled library
 
     The main public methods are:
-    * ``parse_header_file``
+    * ``parse_header_files``
     * ``create_internals``
     * ``bind_to_module``
 
@@ -207,6 +207,7 @@ class Interface:
         self.classes = dict()
 
         self.defines = []
+        self.prototypes = []
         self.init_funcs = dict()
         self.func_aliases = dict()
         self.wrappers = []
@@ -218,6 +219,13 @@ class Interface:
             self.wrapper_modules.append(built_in_wrapper_module)
 
         self.current_doc = ""
+
+    def parse_header_files(self, header_files):
+        """ Parse a list of C header files """
+        for header in header_files:
+            self.parse_header_file(header)
+        for proto, doc in self.prototypes:
+            self.parse_function_prototype(proto, doc)
 
     def parse_header_file(self, header_file):
         """ Parse a C header file.
@@ -287,27 +295,34 @@ class Interface:
             line = self._apply_defines(line)
 
             if "(" in line:
-                # Continue reading lines will we've reached the final ");".
+                # Continue reading lines until we reach the final ");".
                 while not line.endswith(");"):
                     ### Append the next line, approrpiately stripped.
                     next_line = f.readline()
                     if not next_line:
-                        raise ValueError("File ended during function definition")
+                        msg = "File ended during function definition"
+                        raise ValueError(msg)
 
                     next_line = self._strip_whitespace_and_comment(next_line)
                     next_line = self._apply_defines(next_line)
                     line += " " + next_line
 
-                self.parse_function_prototype(line)
+                # Delay processing of prototypes until all headers
+                # have been processed.
+                self.register_prototype(line, self.current_doc)
 
             # Reset the current doc string we're tracking.
             self.current_doc = ""
 
         return True
 
-    def parse_function_prototype(self, prototype):
+    def register_prototype(self, prototype, doc):
+        """ Register a new function prototype """
+        self.prototypes.append((prototype, doc))
+
+    def parse_function_prototype(self, prototype, doc):
         """ Parse a line that's a function prototype. """
-        func = InterfaceFunction(prototype, self.current_doc.strip())
+        func = InterfaceFunction(prototype, doc.strip())
         cls = None
 
         # Check if this function has been given a specific alias and
@@ -436,7 +451,7 @@ class InterfaceFunctionWrapper:
         return rtn
 
 
-def create_interface(header_file, library_file,
+def create_interface(header_files, library_file,
                      module = None,
                      wrapper_modules = None):
     """ Load an interface from a C header file and shared library,
@@ -444,14 +459,16 @@ def create_interface(header_file, library_file,
 
     This is the main public function for the entire package. """
     interface = Interface(wrapper_modules = wrapper_modules)
-    interface.parse_header_file(header_file)
+    if isinstance(header_files, str):
+        header_files = [header_files]
+    interface.parse_header_files(header_files)
     interface.create_internals(library_file)
 
     # Create a new empty module, if we weren't given one already.
     if module is None:
-        name = os.path.basename(header_file)
-        name = name[: name.rindex(".")]
-        module = types.ModuleType(name)
+        lib_name = os.path.basename(library_file)
+        mod_name = lib_name[: lib_name.rindex(".")]
+        module = types.ModuleType(mod_name)
 
     interface.bind_to_module(module)
     return module
