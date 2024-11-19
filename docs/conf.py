@@ -22,6 +22,7 @@ author = 'Alex Craig'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinxemoji.sphinxemoji',
 ]
 
 templates_path = ['_templates']

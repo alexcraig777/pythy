@@ -10,6 +10,7 @@ pythy: a clean Python interface to compiled code
     directives
     parsing
     issues
+    madison
 
 Welcome to ``pythy``! Thanks for coming.
 
